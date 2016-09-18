@@ -6,7 +6,8 @@ from oauth2client import client
 from oauth2client import file as oauthFile
 from oauth2client import tools
 
-from constants import API_SCOPES, CREDENTIAL_STORE_FILE, API_NAME, API_VERSION
+from constants import API_SCOPES, API_NAME, API_VERSION
+from constants import ARGS_FILE, CLIENT_SECRET_FILE, CREDENTIAL_STORE_FILE
 
 
 def get_arguments(argv, desc, parents=None):
@@ -24,16 +25,15 @@ def oAuth():
     argparser = argparse.ArgumentParser(add_help=False)
     argparser.add_argument('profile_id', type=int,
                        help='The ID of the profile to add a placement for')
-    
-    file = csv.reader(open("/Users/peiyan/Documents/MightyHive/DCM_Trafficking/file2.csv", "rU"))
-    for argv in file:
-        flags = get_arguments(argv, __doc__, parents=[argparser])
-    profileId = argv[0]
-        
-    client_secrets = os.path.join("/Users/peiyan/Documents/MightyHive/DCM_Trafficking",
-                                'client_secret_827029712124-5i2d5vmkeeeqsqs5mnqdpeiotls63j20.apps.googleusercontent.com.json')
+
+    with open(ARGS_FILE, 'rU') as argsf:
+        reader = csv.reader(argsf)
+        for argv in file:
+            flags = get_arguments(argv, __doc__, parents=[argparser])
+        profileId = argv[0]
+
     flow = client.flow_from_clientsecrets(
-        client_secrets,
+        CLIENT_SECRET_FILE,
         scope=API_SCOPES,
         message=tools.message_if_missing(client_secrets))
     storage = oauthFile.Storage(CREDENTIAL_STORE_FILE)
