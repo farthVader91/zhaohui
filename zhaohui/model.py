@@ -1,8 +1,10 @@
 class BaseAd(object):
-    def __init__(self, placement, custom_url, _type, *args, **kwargs):
+    def __init__(self, placement, custom_url, _type, start_time, end_time, *args, **kwargs):
         self.placement = placement
         self.custom_url = custom_url
         self._type = _type
+        self.start_time = start_time
+        self.end_time = end_time
 
     def make_generic_payload(self):
         return {
@@ -21,8 +23,8 @@ class BaseAd(object):
                     'placementId': placementid,
                 },
             ],
-            'startTime': '%sT04:00:00Z' % row.Ad_start_date,
-            'endTime': '%sT03:59:00Z' % row.Ad_end_date,
+            'startTime': '%sT04:00:00Z' % self.start_time,
+            'endTime': '%sT03:59:00Z' % self.end_time,
             'type': self._type,
         }
 
@@ -133,6 +135,8 @@ class Placement(object):
         self.height = height
         self.startdate = startdate
         self.enddate = enddate
+        # id will be assigned later
+        self._id = None
 
     def make_creative_payload(self):
         return {
@@ -193,6 +197,9 @@ class Campaign(object):
             'endDate': self.enddate,
         }
 
+    def extract_campaigns(self, dataframe):
+        # returns an iterable of campaign instances
+
     def __str__(self):
         return 'Campaign-{0.name}'.format(self)
 
@@ -222,6 +229,21 @@ class CampaignManager(object):
         self.profile_id = profile_id
 
 
+    def iter_unique_campaigns(self, dataframe):
+        unique_campaign_names = dataframe["campaign_name"].unique()
+        for name in unique_campaign_names:
+            # extract any one row
+            row = dataframe[dataframe["campaign_name"] == name].iloc[0]
+            yield Campaign(
+                row.campaign_name,
+                row.Advertiser_id,
+                row.startdate,
+                row.enddate,
+                row.default_url,
+                row.default_url_name,
+            )
+
+
     def get_campaign_id(self, campaign_name):
         campaign_id = None
         request = self.service.campaigns().list(
@@ -235,6 +257,7 @@ class CampaignManager(object):
             campaign_id = int(campaigns[0].get("id"))
 
         return campaign_id
+
 
     def create_click_tracking_ad(self, ad):
         request = self.service.ads().insert(

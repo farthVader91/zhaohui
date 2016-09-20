@@ -21,7 +21,7 @@ def get_arguments(argv, desc, parents=None):
     return parser.parse_args(argv)
 
 
-def oAuth():
+def get_service_and_profile_id():
     argparser = argparse.ArgumentParser(add_help=False)
     argparser.add_argument('profile_id', type=int,
                        help='The ID of the profile to add a placement for')
