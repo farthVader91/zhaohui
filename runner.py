@@ -19,3 +19,7 @@ def main():
 			# create all ads
 			for ad in placement.iter_ads(inputs):
 				ad.create(service, profile_id)
+
+
+if __name__ == '__main__':
+	main()

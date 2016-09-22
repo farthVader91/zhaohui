@@ -13,8 +13,8 @@ class BaseAd(object):
     def make_generic_payload(self):
         return {
             'active': 'true',
-            'name': self.placement.name
-            'campaignId': self.placement.campaign.id,
+            'name': self.placement.name,
+            'campaignId': self.placement.campaign._id,
             'clickThroughUrl':{
                 'customClickThroughUrl': self.custom_url,
             },
@@ -25,7 +25,7 @@ class BaseAd(object):
             'placementAssignments': [
                 {
                     'active': 'true',
-                    'placementId': placementid,
+                    'placementId': self.placement._id,
                 },
             ],
             'startTime': '%sT04:00:00Z' % self.start_time,
@@ -80,9 +80,9 @@ class DefaultAd(BaseAd):
 
     def make_creative_rotation(self, service, profile_id):
         assignments_container = []
-        for row in self.creative_rows.iterrows():
+        for _, row in self.creative_rows.iterrows():
             request = service.creatives().list(
-                profileId=profileId, 
+                profileId=profile_id, 
                 campaignId=self.placement.campaign._id, 
                 searchString=row.creative_name,
             ) 
@@ -276,6 +276,7 @@ class AdFactory(object):
         if row.ad_type == 'AD_SERVING_CLICK_TRACKER':
             return ClickTrackerAd(
                 placement=placement,
+                name=row.ad_name,
                 custom_url=row.custom_url,
                 _type=row.ad_type,
                 start_time=row.Ad_start_date,
@@ -285,6 +286,7 @@ class AdFactory(object):
         elif row.ad_type == 'AD_SERVING_TRACKING':
             return TrackingAd(
                 placement=placement,
+                name=row.ad_name,
                 custom_url=row.custom_url,
                 _type=row.ad_type,
                 start_time=row.Ad_start_date,
@@ -293,6 +295,7 @@ class AdFactory(object):
         else:
             return DefaultAd(
                 placement=placement,
+                name=row.ad_name,
                 custom_url=row.custom_url,
                 _type=row.ad_type,
                 start_time=row.Ad_start_date,
@@ -302,7 +305,7 @@ class AdFactory(object):
 
 
 class Placement(object):
-    def __init__(self, campaign, name, campaign, compatibility,
+    def __init__(self, campaign, name, compatibility,
                  dir_site_id, width, height):
         self.campaign = campaign
         self.name = name
@@ -330,7 +333,7 @@ class Placement(object):
         placement_id = None
         request = service.placements().list(
             profileId=profile_id, 
-            campaignIds=campaign_id,
+            campaignIds=self.campaign._id,
             searchString=self.name,
         )
         response = request.execute()
@@ -380,7 +383,7 @@ class Placement(object):
 
     def make_payload(self):
         payload = self.make_generic_payload()
-        if self.compatibility != 'IN_STREAM_VIDEO':
+        if self.compatibility == 'IN_STREAM_VIDEO':
             # remove 'size' key
             payload.pop('size', None) 
 
@@ -391,6 +394,7 @@ class Placement(object):
         placement_id = self.get_placement_id(service, profile_id)
         if placement_id is not None:
             print "{0} already exists".format(self)
+            self._id = placement_id
             return placement_id
         request = service.placements().insert(
             profileId=profile_id,
@@ -438,7 +442,7 @@ class Campaign(object):
                 Placement(
                     self,
                     row.placement_name,
-                    row.compatibility
+                    row.compatibility,
                     row.directorySIte_ID,
                     row.width,
                     row.height,
@@ -491,6 +495,7 @@ class Campaign(object):
         campaign_id = self.get_campaign_id(service, profile_id)
         if campaign_id is not None:
             print "{0} already exists".format(self)
+            self._id = campaign_id
             return campaign_id
 
         # campaign doesn't exist, let's create it

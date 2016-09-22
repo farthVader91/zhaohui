@@ -1,7 +1,9 @@
 import argparse
 import csv
 import os
+import httplib2
 
+from googleapiclient import discovery
 from oauth2client import client
 from oauth2client import file as oauthFile
 from oauth2client import tools
@@ -28,14 +30,14 @@ def get_service_and_profile_id():
 
     with open(ARGS_FILE, 'rU') as argsf:
         reader = csv.reader(argsf)
-        for argv in file:
+        for argv in reader:
             flags = get_arguments(argv, __doc__, parents=[argparser])
         profileId = argv[0]
 
     flow = client.flow_from_clientsecrets(
         CLIENT_SECRET_FILE,
         scope=API_SCOPES,
-        message=tools.message_if_missing(client_secrets))
+        message=tools.message_if_missing(CLIENT_SECRET_FILE))
     storage = oauthFile.Storage(CREDENTIAL_STORE_FILE)
     credentials = storage.get()
      
