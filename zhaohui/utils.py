@@ -26,9 +26,9 @@ def get_arguments(argv, desc, parents=None):
 def get_service_and_profile_id():
     argparser = argparse.ArgumentParser(add_help=False)
     argparser.add_argument('profile_id', type=int,
-                       help='The ID of the profile to add a placement for')
+                       help='The ID of the profile to access the DCM Trafficking API') 
 
-    with open(ARGS_FILE, 'rU') as argsf:
+    with open(ARGS_FILE, 'rU') as argsf: ##Change the way it handles profile ID
         reader = csv.reader(argsf)
         for argv in reader:
             flags = get_arguments(argv, __doc__, parents=[argparser])

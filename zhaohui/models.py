@@ -13,7 +13,7 @@ class BaseAd(object):
     def make_generic_payload(self):
         return {
             'active': 'true',
-            'name': self.placement.name,
+            'name': self.name,
             'campaignId': self.placement.campaign._id,
             'clickThroughUrl':{
                 'customClickThroughUrl': self.custom_url,
@@ -154,7 +154,7 @@ class TrackingAd(BaseAd):
         }
 
         request = service.creatives().insert(
-            profileId=profileId, 
+            profileId=profile_id, 
             body=creative,
         )
 
@@ -234,16 +234,16 @@ class TrackingAd(BaseAd):
 class ClickTrackerAd(BaseAd):
     def __init__(self, *args, **kwargs):
         dynamic_click_tracker = kwargs.pop('dynamic_click_tracker')
-        super(ClickTrackerAd, self).__init__(*args, **kwargs)
+        super(ClickTrackerAd, self).__init__(*args, **kwargs)# please explain more on this
         self.dynamic_click_tracker = dynamic_click_tracker
 
 
     def make_dynamic_tracker_payload(self):
         payload = self.make_generic_payload()
         payload.update({
-            'dynamicClickTracker': True,
+            'dynamicClickTracker': "True",
         })
-        payload.pop('active', None)
+        #payload.pop('active', None)
         return payload
 
 
@@ -257,7 +257,7 @@ class ClickTrackerAd(BaseAd):
 
 
     def make_payload(self):
-        if self.dynamic_click_tracker == "True":
+        if self.dynamic_click_tracker == True:
             # implies that it's a dynamic click tracker
             return self.make_dynamic_tracker_payload()
         else:
@@ -334,6 +334,7 @@ class Placement(object):
         request = service.placements().list(
             profileId=profile_id, 
             campaignIds=self.campaign._id,
+            directorySiteIds = self.dir_site_id,
             searchString=self.name,
         )
         response = request.execute()
@@ -424,6 +425,7 @@ class Campaign(object):
         self.archived = 'false'
 
 
+
     def make_payload(self):
         return {
             'name': self.name,
@@ -438,7 +440,7 @@ class Campaign(object):
         placements = []
         for name in unique_placement_names:
             row = dataframe[dataframe["placement_name"] == name].iloc[0]
-            placements.append(
+            placements.append(#why for campaign we are using cls while for placements we are using self?
                 Placement(
                     self,
                     row.placement_name,
@@ -452,8 +454,8 @@ class Campaign(object):
         return placements
 
 
-    @classmethod
-    def iter_campaigns(cls, dataframe):
+    @classmethod #why it says this?
+    def iter_campaigns(cls, dataframe):#cls vs. self
         unique_campaign_names = dataframe["campaign_name"].unique()
 
         campaigns = []
@@ -512,6 +514,79 @@ class Campaign(object):
         print '{0} created!'.format(self)
         return campaign_id   
 
+    def activate(self, service, profile_id):
+        request = service.ads().list(profileId = profile_id,  campaignIds = self._id,
+                                 searchString = "Default")
+
+        activate_default = request.execute()
+        for i in range(0,len(activate_default.get("ads")) ):
+            if activate_default.get("ads")[i].get("active") == False:
+                ads = {
+                'active': 'True',
+                "campaignIds":self._id
+            }
+                request = service.ads().patch(profileId = profile_id, id = int(activate_default.get("ads")[i].get("id")),
+                                 body=ads)
+
+                response = request.execute()
+        
+            else:
+                print "all the default ads are set to active now!"
+
+
+    def checkcreatives(self, service, profile_id, campaignrows):
+        print "Please upload all your creatives to:", self.name, "if you haven't done so."
+        unique_creative_names = campaignrows["creative_name"].unique()
+        print unique_creative_names
+        request = service.creatives().list(profileId = profile_id,  campaignId = self._id, types = #"DISPLAY" 
+                                                                                                "INSTREAM_VIDEO" 
+                                                                                                or "BRAND_SAFE_DEFAULT_INSTREAM_VIDEO"
+                                                                                                or "CUSTOM_DISPLAY"
+                                                                                                or "CUSTOM_DISPLAY_INTERSTITIAL"
+                                                                                                or "DISPLAY_IMAGE_GALLERY"
+                                                                                                or "DISPLAY_REDIRECT"
+                                                                                                or "FLASH_INPAGE"
+                                                                                                or "HTML5_BANNER"
+                                                                                                or "IMAGE"
+                                                                                                or "INSTREAM_VIDEO_REDIRECT"
+                                                                                                or "INTERNAL_REDIRECT"
+                                                                                                or "INTERSTITIAL_INTERNAL_REDIRECT"
+                                                                                                or "RICH_MEDIA_DISPLAY_BANNER"
+                                                                                                or "RICH_MEDIA_DISPLAY_EXPANDING"
+                                                                                                or "RICH_MEDIA_DISPLAY_INTERSTITIAL"
+                                                                                                or "RICH_MEDIA_DISPLAY_MULTI_FLOATING_INTERSTITIAL"
+                                                                                                or "RICH_MEDIA_IM_EXPAND"
+                                                                                                or "RICH_MEDIA_INPAGE_FLOATING"
+                                                                                                or "RICH_MEDIA_MOBILE_IN_APP"
+                                                                                                or "RICH_MEDIA_PEEL_DOWN"
+                                                                                                or "VPAID_LINEAR_VIDEO"
+                                                                                                or "VPAID_NON_LINEAR_VIDEO")
+        response = request.execute()
+        existing_creatives = []
+        #print response.get("creatives")[13]
+
+        for i in range(0, len(response.get("creatives"))):
+            #if esponse.get("creatives")[i]
+            creative_name = response.get("creatives")[i].get("creativeAssets")[0].get('assetIdentifier').get("name")
+            existing_creatives.append(creative_name)
+            i = i + 1
+        print existing_creatives
+
+        missing_creatives = []
+        for creative_name in unique_creative_names:
+            j = 0
+            for j in range(0, len(unique_creative_names)):
+                if creative_name not in existing_creatives[j]:
+                    j = j + 1
+
+                else:
+                    break
+        missing_creatives.append(creative_name)
+        print "we are missing the following creatives ", missing_creatives
+       
 
     def __str__(self):
         return 'Campaign-{0.name}'.format(self)
+
+
+
