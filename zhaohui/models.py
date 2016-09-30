@@ -109,7 +109,7 @@ class DefaultAd(BaseAd):
         rot_type = rot_type if not pd.isnull(rot_type) else "CREATIVE_ROTATION_TYPE_RANDOM"
         rot_weight = row.rotation_weight
         rot_weight = rot_weight if not pd.isnull(rot_weight) else "WEIGHT_STRATEGY_EQUAL"
-        
+
         creative_rotation = {
             'creativeAssignments': assignments_container,
             'type': rot_type,  #CREATIVE_ROTATION_TYPE_SEQUENTIAL
@@ -547,7 +547,7 @@ class Campaign(object):
         for ad in ads:
             if not ad['active']:
                 body = {
-                    'active': 'True',
+                    'active': 'true',
                     'campaignIds': self._id,
                 }
                 request = service.ads().patch(
@@ -576,68 +576,22 @@ class Campaign(object):
             for ele in creatives
         }
 
-        unique_creative_names = set(self.rows.creative_name.unique().tolist())
-
-        missing_creatives = unique_creative_names - existing_creative_names
-
-        return list(missing_creatives)
-
-
-
-    # FIND OUT ABOUT CREATIVE_TYPES BELOW!!!
-    def checkcreatives(self, service, profile_id, campaignrows):
-        print "Please upload all your creatives to:", self.name, "if you haven't done so."
-        unique_creative_names = campaignrows["creative_name"].unique()
-        print unique_creative_names
-        request = service.creatives().list(profileId = profile_id,  campaignId = self._id, types = #"DISPLAY" 
-                                                                                                "INSTREAM_VIDEO" 
-                                                                                                or "BRAND_SAFE_DEFAULT_INSTREAM_VIDEO"
-                                                                                                or "CUSTOM_DISPLAY"
-                                                                                                or "CUSTOM_DISPLAY_INTERSTITIAL"
-                                                                                                or "DISPLAY_IMAGE_GALLERY"
-                                                                                                or "DISPLAY_REDIRECT"
-                                                                                                or "FLASH_INPAGE"
-                                                                                                or "HTML5_BANNER"
-                                                                                                or "IMAGE"
-                                                                                                or "INSTREAM_VIDEO_REDIRECT"
-                                                                                                or "INTERNAL_REDIRECT"
-                                                                                                or "INTERSTITIAL_INTERNAL_REDIRECT"
-                                                                                                or "RICH_MEDIA_DISPLAY_BANNER"
-                                                                                                or "RICH_MEDIA_DISPLAY_EXPANDING"
-                                                                                                or "RICH_MEDIA_DISPLAY_INTERSTITIAL"
-                                                                                                or "RICH_MEDIA_DISPLAY_MULTI_FLOATING_INTERSTITIAL"
-                                                                                                or "RICH_MEDIA_IM_EXPAND"
-                                                                                                or "RICH_MEDIA_INPAGE_FLOATING"
-                                                                                                or "RICH_MEDIA_MOBILE_IN_APP"
-                                                                                                or "RICH_MEDIA_PEEL_DOWN"
-                                                                                                or "VPAID_LINEAR_VIDEO"
-                                                                                                or "VPAID_NON_LINEAR_VIDEO")
-        response = request.execute()
-        existing_creatives = []
-        #print response.get("creatives")[13]
-
-        for i in range(0, len(response.get("creatives"))):
-            #if esponse.get("creatives")[i]
-            creative_name = response.get("creatives")[i].get("creativeAssets")[0].get('assetIdentifier').get("name")
-            existing_creatives.append(creative_name)
-            i = i + 1
-        print existing_creatives
+        unique_creative_names = {
+            ele for ele in self.rows.creative_name.unique().tolist()
+            if not pd.isnull(ele)
+        }
 
         missing_creatives = []
-        for creative_name in unique_creative_names:
-            j = 0
-            for j in range(0, len(unique_creative_names)):
-                if creative_name not in existing_creatives[j]:
-                    j = j + 1
-
-                else:
+        for uname in unique_creative_names:
+            for ename in existing_creative_names:
+                if uname in ename:
                     break
-        missing_creatives.append(creative_name)
-        print "we are missing the following creatives ", missing_creatives
-       
+            else:
+                missing_creatives.append(uname)
+
+
+        return missing_creatives
+
 
     def __str__(self):
         return 'Campaign-{0.name}'.format(self)
-
-
-

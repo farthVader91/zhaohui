@@ -28,6 +28,7 @@ CLIENT_SECRET_FILE = os.path.join(
 INPUT_FILE = '/Users/peiyan/Desktop/peiyan.csv' #why handle it different than args_file or client_secret_file?
 
 CREATIVE_TYPES = [
+    "DISPLAY",
     "INSTREAM_VIDEO",
     "BRAND_SAFE_DEFAULT_INSTREAM_VIDEO",
     "CUSTOM_DISPLAY",
