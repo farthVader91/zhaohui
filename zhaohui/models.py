@@ -1,11 +1,18 @@
+import pandas as pd
+
+from zhaohui.constants import CREATIVE_TYPES
+
 class BaseAd(object):
-    def __init__(self, placement, name, custom_url, _type, start_time, end_time):
+    def __init__(self, placement, name, custom_url, _type, start_time, end_time, rows):
         self.placement = placement
         self.name = name
         self.custom_url = custom_url
-        self._type = _type
-        self.start_time = start_time
-        self.end_time = end_time
+        self._type = _type if not pd.isnull(_type) or "AD_SERVING_STANDARD_AD"
+        start_time = start_time if not pd.isnull(start_time) or pd.datetime.strptime(self.placement.dirsite.campaign.startdate, '%Y-%m-%d')
+        self.start_time = start_time.strftime('%Y-%m-%d')
+        end_time = end_time if not pd.isnull(end_time) or (start_time + pd.Timedelta('1 day'))
+        self.end_time = end_time.strftime('%Y-%m-%d')
+        self.rows = rows
 
         self._id = None
 
@@ -14,7 +21,7 @@ class BaseAd(object):
         return {
             'active': 'true',
             'name': self.name,
-            'campaignId': self.placement.campaign._id,
+            'campaignId': self.placement.dirsite.campaign._id,
             'clickThroughUrl':{
                 'customClickThroughUrl': self.custom_url,
             },
@@ -72,27 +79,22 @@ class BaseAd(object):
 
 
 class DefaultAd(BaseAd):
-    def __init__(self, *args, **kwargs):
-        rows = kwargs.pop('creative_rows')
-        super(DefaultAd, self).__init__(*args, **kwargs)
-        self.creative_rows = rows
-
-
     def make_creative_rotation(self, service, profile_id):
         assignments_container = []
-        for _, row in self.creative_rows.iterrows():
+        for _, row in self.rows.iterrows():
             request = service.creatives().list(
                 profileId=profile_id, 
-                campaignId=self.placement.campaign._id, 
+                campaignId=self.placement.dirsite.campaign._id, 
                 searchString=row.creative_name,
             ) 
             response = request.execute()
                     
-            creative_id = int(
-                response.get(
-                    "creatives"
-                )[0].get("idDimensionValue").get("value")
-            )
+            creatives = response.get('creatives', [])
+            if not creatives:
+                # throw an exception if creative does not exist
+                raise Exception('Creative-%s has not been created' % (row.creative_name))
+
+            creative_id = int(creatives[0]["idDimensionValue"]["value"])
 
             assignments_container.append({
                 'active': 'true',
@@ -103,10 +105,15 @@ class DefaultAd(BaseAd):
                 }
             })
 
+        rot_type = row.rotation_type
+        rot_type = rot_type if not pd.isnull(rot_type) else "CREATIVE_ROTATION_TYPE_RANDOM"
+        rot_weight = row.rotation_weight
+        rot_weight = rot_weight if not pd.isnull(rot_weight) else "WEIGHT_STRATEGY_EQUAL"
+        
         creative_rotation = {
             'creativeAssignments': assignments_container,
-            'type': row.rotation_type,  #CREATIVE_ROTATION_TYPE_SEQUENTIAL
-            'weightCalculationStrategy': row.rotation_weight#"WEIGHT_STRATEGY_CUSTOM",
+            'type': rot_type,  #CREATIVE_ROTATION_TYPE_SEQUENTIAL
+            'weightCalculationStrategy': rot_weight #"WEIGHT_STRATEGY_CUSTOM",
             #"WEIGHT_STRATEGY_EQUAL",  #"WEIGHT_STRATEGY_HIGHEST_CTR" ,#"WEIGHT_STRATEGY_OPTIMIZED"
         }
 
@@ -147,7 +154,7 @@ class TrackingAd(BaseAd):
 
     def create_creative(self, service, profile_id):
         creative = {
-            "advertiserId": self.placement.campaign.advertiser_id,
+            "advertiserId": self.placement.dirsite.campaign.advertiser_id,
             "type": "TRACKING_TEXT",
             "name": "Tracking Ad4",
             'active': "true"
@@ -161,7 +168,7 @@ class TrackingAd(BaseAd):
         creative = request.execute()
         print "creative has been created"
 
-        self.creative_id = int(creative.get("idDimensionValue").get("value"))
+        self.creative_id = int(creative["idDimensionValue"]["value"])
 
         return creative
 
@@ -174,7 +181,7 @@ class TrackingAd(BaseAd):
         }
         request = service.campaignCreativeAssociations().insert(
             profileId=profile_id,
-            campaignId=self.placement.campaign._id,
+            campaignId=self.placement.dirsite.campaign._id,
             body=association,
         )
 
@@ -233,36 +240,20 @@ class TrackingAd(BaseAd):
 
 class ClickTrackerAd(BaseAd):
     def __init__(self, *args, **kwargs):
-        dynamic_click_tracker = kwargs.pop('dynamic_click_tracker')
+        dynamic_click_tracker = kwargs.pop('dynamic_click_tracker', "False")
         super(ClickTrackerAd, self).__init__(*args, **kwargs)# please explain more on this
         self.dynamic_click_tracker = dynamic_click_tracker
 
 
-    def make_dynamic_tracker_payload(self):
-        payload = self.make_generic_payload()
-        payload.update({
-            'dynamicClickTracker': "True",
-        })
-        #payload.pop('active', None)
-        return payload
-
-
-    def make_static_tracker_payload(self):
-        payload = self.make_generic_payload()
-        payload.update({
-            'dynamicClickTracker': False,
-        })        
-        payload.pop('active', None)
-        return payload
-
-
     def make_payload(self):
-        if self.dynamic_click_tracker == True:
-            # implies that it's a dynamic click tracker
-            return self.make_dynamic_tracker_payload()
-        else:
-            # implies that it's a static click tracker
-            return self.make_static_tracker_payload()            
+        payload = self.make_generic_payload()
+        payload.update({
+            'dynamicClickTracker': self.dynamic_click_tracker,
+        })
+        if self.dynamic_click_tracker == "False":
+            payload.pop('active', None)
+
+        return payload
 
 
     def __str__(self):
@@ -282,6 +273,7 @@ class AdFactory(object):
                 start_time=row.Ad_start_date,
                 end_time=row.Ad_end_date,
                 dynamic_click_tracker=row.dynamicClickTracker,
+                rows=rows,
             )
         elif row.ad_type == 'AD_SERVING_TRACKING':
             return TrackingAd(
@@ -291,6 +283,7 @@ class AdFactory(object):
                 _type=row.ad_type,
                 start_time=row.Ad_start_date,
                 end_time=row.Ad_end_date,
+                rows=rows,
             )
         else:
             return DefaultAd(
@@ -300,28 +293,28 @@ class AdFactory(object):
                 _type=row.ad_type,
                 start_time=row.Ad_start_date,
                 end_time=row.Ad_end_date,
-                creative_rows=rows,
+                rows=rows,
             )
 
 
 class Placement(object):
-    def __init__(self, campaign, name, compatibility,
-                 dir_site_id, width, height):
-        self.campaign = campaign
+    def __init__(self, dirsite, name, compatibility,
+                width, height, rows):
+        self.dirsite = dirsite
         self.name = name
-        self.compatibility = compatibility
-        self.dir_site_id = dir_site_id
+        self.compatibility = compatibility if not pd.isnull(compatibility) or "DISPLAY"
         self.width = width
         self.height = height
+        self.rows = rows
         # id will be assigned later
         self._id = None
 
 
-    def iter_ads(self, dataframe):
-        unique_ads = dataframe[dataframe['placement_name'] == self.name].ad_name.unique()
+    def iter_ads(self):
+        unique_ads = self.rows.ad_name.unique()
         ads = []
         for name in unique_ads:
-            rows = dataframe[dataframe['ad_name'] == name]
+            rows = self.rows[self.rows['ad_name'] == name]
             ads.append(
                 AdFactory.make_ad(self, rows)
             )
@@ -333,8 +326,8 @@ class Placement(object):
         placement_id = None
         request = service.placements().list(
             profileId=profile_id, 
-            campaignIds=self.campaign._id,
-            directorySiteIds = self.dir_site_id,
+            campaignIds=self.dirsite.campaign._id,
+            directorySiteIds=self.dirsite._id,
             searchString=self.name,
         )
         response = request.execute()
@@ -349,9 +342,9 @@ class Placement(object):
     def make_generic_payload(self):
         return {
             'name': self.name,
-            'campaignId': self.campaign._id,
+            'campaignId': self.dirsite.campaign._id,
             'compatibility': self.compatibility,
-            'directorySiteId': self.dir_site_id,
+            'directorySiteId': self.dirsite._id,
             'size': {
                 'width': self.width,
                 'height': self.height
@@ -375,8 +368,8 @@ class Placement(object):
                 'PLACEMENT_TAG_TRACKING_JAVASCRIPT',
             ],
             'pricingSchedule': {
-                'startDate': self.campaign.startdate,
-                'endDate': self.campaign.enddate,
+                'startDate': self.dirsite.campaign.startdate,
+                'endDate': self.dirsite.campaign.enddate,
                 'pricingType': 'PRICING_TYPE_CPM',
             }
         }
@@ -411,19 +404,45 @@ class Placement(object):
     def __str__(self):
         return 'Placement-{0.name}'.format(self)
 
+class DirSite(object):
+    def __init__(self, campaign, site_id, rows):
+        self.campaign = campaign
+        self._id = site_id
+        self.rows = rows
+
+
+    def iter_placements(self):
+        unique_placement_names = self.rows.placement_name.unique()
+        placements = []
+        for name in unique_placement_names:
+            rows = self.rows[self.rows["placement_name"] == name]
+            row = rows.iloc[0]
+            placements.append(#why for campaign we are using cls while for placements we are using self?
+                Placement(
+                    self,
+                    row.placement_name,
+                    row.compatibility,
+                    row.width,
+                    row.height,
+                    rows,
+                )
+            )
+
+        return placements
+
 
 class Campaign(object):
-    def __init__(self, name, advertiser_id, startdate, enddate, default_url, default_url_name):
+    def __init__(self, name, advertiser_id, startdate, enddate, default_url, default_url_name, rows):
         self.name = name
         self.advertiser_id = advertiser_id
-        self.startdate = startdate
-        self.enddate = enddate
+        self.startdate = startdate.strftime('%Y-%m-%d')
+        self.enddate = enddate.strftime('%Y-%m-%d')
         self.default_url = default_url
         self.default_url_name = default_url_name
+        self.rows = rows
         # id will be assigned later
         self._id = None
         self.archived = 'false'
-
 
 
     def make_payload(self):
@@ -435,23 +454,22 @@ class Campaign(object):
             'endDate': self.enddate,
         }
 
-    def iter_placements(self, dataframe):
-        unique_placement_names = dataframe[dataframe["campaign_name"] == self.name].placement_name.unique()
-        placements = []
-        for name in unique_placement_names:
-            row = dataframe[dataframe["placement_name"] == name].iloc[0]
-            placements.append(#why for campaign we are using cls while for placements we are using self?
-                Placement(
+
+    def iter_dirsites(self):
+        unique_site_ids = self.rows.directorySIte_ID.unique()
+        dirsites = []
+        for site_id in unique_site_ids:
+            df = self.rows
+            rows = df[df.directorySIte_ID == site_id]
+            dirsites.append(
+                DirSite(
                     self,
-                    row.placement_name,
-                    row.compatibility,
-                    row.directorySIte_ID,
-                    row.width,
-                    row.height,
+                    site_id,
+                    rows,
                 )
             )
 
-        return placements
+        return dirsites
 
 
     @classmethod #why it says this?
@@ -462,7 +480,8 @@ class Campaign(object):
 
         for name in unique_campaign_names:
             # extract any one row
-            row = dataframe[dataframe["campaign_name"] == name].iloc[0]
+            rows = dataframe[dataframe["campaign_name"] == name]
+            row = rows.iloc[0]
             campaigns.append(
                 cls(
                     row.campaign_name,
@@ -471,6 +490,7 @@ class Campaign(object):
                     row.enddate,
                     row.default_url,
                     row.default_url_name,
+                    rows,
                 )
             )
 
@@ -514,26 +534,57 @@ class Campaign(object):
         print '{0} created!'.format(self)
         return campaign_id   
 
-    def activate(self, service, profile_id):
-        request = service.ads().list(profileId = profile_id,  campaignIds = self._id,
-                                 searchString = "Default")
+
+    def activate_default_ads(self, service, profile_id):
+        request = service.ads().list(
+            profileId=profile_id,
+            campaignIds=self._id,
+            searchString="Default",
+        )
 
         activate_default = request.execute()
-        for i in range(0,len(activate_default.get("ads")) ):
-            if activate_default.get("ads")[i].get("active") == False:
-                ads = {
-                'active': 'True',
-                "campaignIds":self._id
-            }
-                request = service.ads().patch(profileId = profile_id, id = int(activate_default.get("ads")[i].get("id")),
-                                 body=ads)
+        ads = activate_default.get("ads", [])
+        for ad in ads:
+            if not ad['active']:
+                body = {
+                    'active': 'True',
+                    'campaignIds': self._id,
+                }
+                request = service.ads().patch(
+                    profileId=profile_id,
+                    id=ad['id'],
+                    body=body,
+                )
 
                 response = request.execute()
-        
-            else:
-                print "all the default ads are set to active now!"
+                print "activating default ad-%s" % (ad['id'],)
+
+        print "all the default ads are set to active now!"
 
 
+    def get_missing_creatives(self, service, profile_id):
+        # get created creatives
+        request = service.creatives().list(
+            profile_id=profile_id,
+            campaignId=self._id,
+            types=CREATIVE_TYPES,
+        )
+        response = request.execute()
+        creatives = response.get('creatives', [])
+        existing_creative_names = {
+            ele['creative_assets'][0]['assetIdentifier']['name']
+            for ele in creatives
+        }
+
+        unique_creative_names = set(self.rows.creative_name.unique().tolist())
+
+        missing_creatives = unique_creative_names - existing_creative_names
+
+        return list(missing_creatives)
+
+
+
+    # FIND OUT ABOUT CREATIVE_TYPES BELOW!!!
     def checkcreatives(self, service, profile_id, campaignrows):
         print "Please upload all your creatives to:", self.name, "if you haven't done so."
         unique_creative_names = campaignrows["creative_name"].unique()
