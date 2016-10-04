@@ -33,6 +33,8 @@ def main():
 	for campaign in Campaign.iter_campaigns(inputs):
 		# create campaign
 		campaign.create(service, profile_id)
+		#Optional choice to assign creatives from Advertiser to campaign
+		#campaign.assign_creatives(service, profile_id)
 		# get missing creatives have been uploaded
 		missing_creatives = campaign.get_missing_creatives(service, profile_id)
 		print "Missing creatives!\n%s" % ('\n'.join(missing_creatives),)
