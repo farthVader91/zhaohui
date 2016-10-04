@@ -1,0 +1,9 @@
+<!doctype html>
+<title>Campaign Creator</title>
+<body>
+	<form method="POST" action="/">
+	    {{ form.csrf_token }}
+	    {{ form.csv.label }} {{ form.csv }} {{ form.errors }}
+	    <input type="submit" value="Upload">
+	</form>
+</body>
