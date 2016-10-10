@@ -7,9 +7,9 @@ from google.cloud import storage, datastore
 import settings
 from zhaohui.utils import get_service_and_profile_id
 from zhaohui.models import Campaign
+from zhaohui import constants
 
-
-os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = '/Users/vishalgowda/Pictures/Personal/My First Project-000dd451ae27.json'
+os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.join(constants.CONFIG_ROOT, 'dcm trafficking-994418ffc74d.json')
 
 def store_csv(file_obj):
 	"""Creates a blob with a unique name and uploads onto Google Cloud Storage.
@@ -81,7 +81,8 @@ def create_campaign(profile_id, file_obj):
 		#campaign.assign_creatives(service, profile_id)
 		# get missing creatives have been uploaded
 		missing_creatives = campaign.get_missing_creatives(service, profile_id)
-		print "Missing creatives!\n%s" % ('\n'.join(missing_creatives),)
+		if missing_creatives:
+			print "Missing creatives!\n%s" % ('\n'.join(missing_creatives),)
 		# iterate over unique directory sites
 		for dir_site in campaign.iter_dirsites():
 			# iterate over placemenets

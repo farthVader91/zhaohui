@@ -10,7 +10,7 @@ class BaseAd(object):
         self._type = _type if pd.notnull(_type) else "AD_SERVING_STANDARD_AD"
         start_time = start_time if pd.notnull(start_time) else pd.datetime.strptime(self.placement.dirsite.campaign.startdate, '%Y-%m-%d')
         self.start_time = start_time.strftime('%Y-%m-%d')
-        end_time = end_time if pd.notnull(end_time) else (end_time + pd.Timedelta('1 day'))
+        end_time = end_time if pd.notnull(end_time) else (pd.datetime.strptime(self.placement.dirsite.campaign.enddate, '%Y-%m-%d') + pd.Timedelta('1 day'))
         self.end_time = end_time.strftime('%Y-%m-%d')
         self.rows = rows
 
