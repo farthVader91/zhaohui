@@ -1,0 +1,1 @@
+GCS_BUCKET_NAME = 'grand-eye-145913.appspot.com'
