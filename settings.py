@@ -1,0 +1,1 @@
+GCS_BUCKET_NAME = 'dcm-trafficking.appspot.com'

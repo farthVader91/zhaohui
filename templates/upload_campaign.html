@@ -9,65 +9,29 @@
 	</span></center>
 	&nbsp;
 	<center>
-	<select>
-  		<option value="MightyHive - Web.com - DCM - US 2524">MightyHive - Web.com - DCM - US 2524</option>
- 		<option value="MightyHive - Smarter Travel LLC - DCM 4764">MightyHive - Smarter Travel LLC - DCM 4764</option>
- 		<option value="MightyHive - Olson - DCM - US 5118">MightyHive - Olson - DCM - US 5118</option>
- 		<option value="MightyHive - CCP Games - DCM - US 5230">MightyHive - CCP Games - DCM - US 5230</option>
-  		<option value="Ozforex Pty Ltd DFA - APAC 5323">Ozforex Pty Ltd DFA - APAC 5323</option>
- 	 	<option value="MightyHive - Publisher's Clearing House 5685">MightyHive - Publisher's Clearing House 5685</option>
-  		<option value="ightyHive - Ymarketing - DCM -US 5941">MightyHive - Ymarketing - DCM -US 5941</option>
-  		<option value="MightyHive - SouthComm - DCM - US 6143">MightyHive - SouthComm - DCM - US 6143</option>
-  		<option value="MightyHive - Mediasmith,Inc - DCM - US 6401">MightyHive - Mediasmith,Inc - DCM - US 6401</option>
- 	    <option value="MightyHive - Harrah's - DCM - US (Caesars) 6469">MightyHive - Harrah's - DCM - US (Caesars) 6469</option>
-   		<option value="MightyHive - AEG Worldwide - DCM - US 6522">MightyHive - AEG Worldwide - DCM - US 6522</option>
-  		<option value="interTrend Communications - DFA 6575">interTrend Communications - DFA 6575</option>
-  		<option value="MightyHive - Heat - DCM - US 6604">MightyHive - Heat - DCM - US 6604</option>
-		<option value="MightyHive - Sabre - DCM - US 6665">MightyHive - Sabre - DCM - US 6665</option>
-		<option value="MightyHive - Media Storm - DCM - US 7252">MightyHive - Media Storm - DCM - US 7252</option>
-		<option value="MightyHive - Cross Media - DCM - US 7584">MightyHive - Cross Media - DCM - US 7584</option>
-    	<option value="MightyHive - DCM - US 30602">MightyHive - DCM - US 30602</option>
-  		<option value="MightyHive - 02 - DCM - US 38312">MightyHive - 02 - DCM - US 38312</option>
-  		<option value="MightyHive - GE Capital Bank - DCM - US 42803">MightyHive - GE Capital Bank - DCM - US 42803</option>
-  		<option value="MightyHive - Rosetta Stone - DCM - US 52505">MightyHive - Rosetta Stone - DCM - US 52505</option>
-    	<option value="Benchmarketing AU - DCM - APAC c/o 118602">Benchmarketing AU - DCM - APAC c/o 118602</option>
-  		<option value="MightyHive - Delve Partners - DCM - US 120601">MightyHive - Delve Partners - DCM - US 120601</option>
-  		<option value="MightyHive - Zeeto Media - DCM - US 202402">MightyHive - Zeeto Media - DCM - US 202402</option>
-  		<option value="Freshbooks - DCM 208403">Freshbooks - DCM 208403</option>
-    	<option value="MightyHive - J2 Global Ireland - DCM - US 272005">MightyHive - J2 Global Ireland - DCM - US 272005</option>
-  		<option value="MediaNet 272212">MediaNet 272212</option>
-  		<option value="MightyHive - Canada - DCM 281601">MightyHive - Canada - DCM 281601</option>
-  		<option value="MightyHive - Eye Buy Direct c/o Digitas 286606">MightyHive - Eye Buy Direct c/o Digitas 286606</option>
-  		<option value="MightyHive - Partner Fusion - DCM - US 286801">MightyHive - Partner Fusion - DCM - US 286801</option>
-  		<option value="MightyHive - Atlassian - DCM - US 320202">MightyHive - Atlassian - DCM - US 320202</option>
-  		<option value="AIMIA 320802">AIMIA 320802</option>
-  		<option value="MightyHive - Canada - DCM - USD 337603">MightyHive - Canada - DCM - USD 337603</option>
-  		<option value="MightyHive - Dash Two - DCM - US 348001">MightyHive - Dash Two - DCM - US 348001</option>
-  		<option value="MightyHive - Shutterstock - DCM - US 349404">MightyHive - Shutterstock - DCM - US 349404</option>
-  		<option value="MightyHive - AUNZ - DCM - APAC 350402">MightyHive - AUNZ - DCM - APAC 350402</option>
-  		<option value="Mighty Hive - Patriot - DCM - US 377807">Mighty Hive - Patriot - DCM - US 377807</option>
-  		<option value="MightyHive - January Digital - DCM - US 406201">MightyHive - January Digital - DCM - US 406201</option>
-  		<option value="MightyHive - Chegg - DCM - US 419604">MightyHive - Chegg - DCM - US 419604</option>
-  		<option value="MightyHive - US Bank - DCM - US 443804">MightyHive - US Bank - DCM - US 443804</option>
-		</select></center>
-
-
-	&nbsp;
-	&nbsp;
-	<center>
-	<div>
-                <label for="username">Email Address:</label>
-                <input id="user_email_address" name="user[email_address]" size="30" type="text" />
-
-    </div>
-	</center>
-	&nbsp;
-	&nbsp;
-	<center>
 	<form method="POST" action="/">
 	    {{ form.csrf_token }}
-	    {{ form.csv.label }} {{ form.csv }} 
-	    <input type="submit" value="Upload">
+
+	    <center>
+		<div>{{ form.profile_id.label }} {{ form.profile_id }}</div>
+	    {% if form.profile_id.errors %}
+        	<ul class="errors">{% for error in form.profile_id.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+    	{% endif %}
+    	</center>
+    	<center>
+	    <div>{{ form.email.label }} {{ form.email }}</div>
+	    {% if form.email.errors %}
+        	<ul class="errors">{% for error in form.email.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+    	{% endif %}
+    	</center>
+    	<center>
+	    <div>{{ form.csv.label }} {{ form.csv }}</div>
+	    {% if form.csv.errors %}
+        	<ul class="errors">{% for error in form.csv.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+    	{% endif %}
+    	</center>
+	&nbsp;
+	&nbsp;
 	</form>
 	</center>
 	&nbsp;
