@@ -156,7 +156,7 @@ class TrackingAd(BaseAd):
         creative = {
             "advertiserId": self.placement.dirsite.campaign.advertiser_id,
             "type": "TRACKING_TEXT",
-            "name": "Tracking Ad4",
+            "name": "Tracking Ad",
             'active': "true"
         }
 
@@ -490,7 +490,7 @@ class Campaign(object):
                     row.startdate,
                     row.enddate,
                     row.default_url,
-                    row.default_url_name,
+                    "default_url_name",
                     rows
                 )
             )

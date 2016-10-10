@@ -3,6 +3,7 @@ from flask import render_template, redirect
 
 from forms import UploadCampaignForm
 
+
 app = Flask(__name__)
 app.secret_key = 'some-arbitary-secret-key'
 
@@ -16,7 +17,7 @@ def upload_form():
 
 @app.route('/success')
 def success():
-    return 'Campaign created successfully!'
+    return render_template('2view.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -20,6 +20,11 @@ ARGS_FILE = os.path.join(
     'file2.csv'
 )
 
+PROFILE_FILE = os.path.join(
+    CONFIG_ROOT,
+    'profileid.csv'
+)
+
 CLIENT_SECRET_FILE = os.path.join(
     CONFIG_ROOT,
     'client_secret_827029712124-5i2d5vmkeeeqsqs5mnqdpeiotls63j20.apps.googleusercontent.com.json',

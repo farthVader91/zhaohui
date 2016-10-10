@@ -36,8 +36,8 @@ def main():
 		#Optional choice to assign creatives from Advertiser to campaign
 		#campaign.assign_creatives(service, profile_id)
 		# get missing creatives have been uploaded
-		missing_creatives = campaign.get_missing_creatives(service, profile_id)
-		print "Missing creatives!\n%s" % ('\n'.join(missing_creatives),)
+		#missing_creatives = campaign.get_missing_creatives(service, profile_id)
+		#print "Missing creatives!\n%s" % ('\n'.join(missing_creatives),)
 		# iterate over unique directory sites
 		for dir_site in campaign.iter_dirsites():
 			# iterate over placemenets

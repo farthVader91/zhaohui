@@ -32,6 +32,8 @@ def get_service_and_profile_id():
         reader = csv.reader(argsf)
         for argv in reader:
             flags = get_arguments(argv, __doc__, parents=[argparser])
+            print "this is flags"
+            print flags
         profileId = argv[0]
 
     flow = client.flow_from_clientsecrets(
