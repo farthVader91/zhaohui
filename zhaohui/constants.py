@@ -1,4 +1,5 @@
 import os
+import pandas as pd
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) #Why does it this way and also whhere is __file__
 CONFIG_ROOT = '/Users/peiyan/Documents/MightyHive/DCM_Trafficking/'
@@ -25,12 +26,16 @@ PROFILE_FILE = os.path.join(
     'profileid.csv'
 )
 
+profile_info = pd.read_csv(PROFILE_FILE).values.tolist()
+
+
 CLIENT_SECRET_FILE = os.path.join(
     CONFIG_ROOT,
-    'client_secret_827029712124-5i2d5vmkeeeqsqs5mnqdpeiotls63j20.apps.googleusercontent.com.json',
+    'client_secret_617795065013-007f81842n882lep4kvjqt51ec64kr9h.apps.googleusercontent.com.json',
 )
 
-INPUT_FILE = '/Users/peiyan/Desktop/peiyan.csv' #why handle it different than args_file or client_secret_file?
+INPUT_FILE = '/Users/peiyan/Desktop/All_Ads_Types.csv' #why handle it different than args_file or client_secret_file?
+
 
 CREATIVE_TYPES = [
     "DISPLAY",

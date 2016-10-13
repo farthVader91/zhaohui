@@ -2,12 +2,15 @@ import os
 import pandas as pd
 from uuid import uuid4
 
-from google.cloud import storage, datastore
+from gcloud import storage, datastore
 
 import settings
 from zhaohui.utils import get_service_and_profile_id
 from zhaohui.models import Campaign
 from zhaohui import constants
+from datetime import datetime
+
+
 
 os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = os.path.join(constants.CONFIG_ROOT, 'dcm trafficking-994418ffc74d.json')
 
@@ -15,11 +18,15 @@ def store_csv(file_obj):
 	"""Creates a blob with a unique name and uploads onto Google Cloud Storage.
 	Returns the blob object.
 	"""
+	
 	client = storage.Client()
 	bucket = client.get_bucket(settings.GCS_BUCKET_NAME)
-	name = uuid4().hex
+	df = pd.read_csv(file_obj)
+	campaign_info = df.iloc[0]["Advertiser_id"].astype(str) + '-' + df.iloc[0]["campaign_name"]
+	name = unicode(campaign_info +  "-" + datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 	blob = bucket.blob(name, chunk_size=262144)
 	blob.content_type = 'text/csv'
+	file_obj.seek(0, 0)
 	blob.upload_from_file(file_obj)
 	blob.make_public()
 	return blob
@@ -27,6 +34,7 @@ def store_csv(file_obj):
 
 def make_campaign_entry(profile_id, email, blob, status, info):
 	"""Makes an entry for the campaign being created.
+	Information gets recorded in the DataStore in the google console
 	"""
 	client = datastore.Client()
 	key = client.key('CampaignCreation')
@@ -34,13 +42,14 @@ def make_campaign_entry(profile_id, email, blob, status, info):
 	entity = datastore.Entity(key=key)
 	entity['profile_id'] = profile_id
 	entity['email'] = email
-	entity['blob_name'] = blob.name
+	entity['blob_name'] = unicode(blob.name)
 	entity['blob_url'] = blob.media_link
 	entity['completed'] = status
+	entity['creation_time'] = unicode(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
 	info_key = client.key('CreationResult')
 	info_entity = datastore.Entity(key=info_key)
-	info_entity['failed_ads'] = info
+	info_entity['failed_ads'] = unicode(info)
 
 	entity['info'] = info_entity
 
@@ -49,7 +58,7 @@ def make_campaign_entry(profile_id, email, blob, status, info):
 
 
 def create_campaign(profile_id, file_obj):
-	service, profile_id = get_service_and_profile_id()
+	service = get_service_and_profile_id()
 	# get hold of the dataframe
 	inputs = pd.read_csv(
 		file_obj,
@@ -77,6 +86,7 @@ def create_campaign(profile_id, file_obj):
 	for campaign in Campaign.iter_campaigns(inputs):
 		# create campaign
 		campaign.create(service, profile_id)
+
 		#Optional choice to assign creatives from Advertiser to campaign
 		#campaign.assign_creatives(service, profile_id)
 		# get missing creatives have been uploaded

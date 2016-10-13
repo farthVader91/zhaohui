@@ -1,12 +1,13 @@
 import pandas as pd
 
 from zhaohui.constants import CREATIVE_TYPES
+from flask import redirect
 
 class BaseAd(object):
     def __init__(self, placement, name, custom_url, _type, start_time, end_time, rows):
         self.placement = placement
         self.name = name
-        self.custom_url = custom_url
+        self.custom_url = custom_url if pd.notnull(custom_url) else self.placement.dirsite.campaign.default_url
         self._type = _type if pd.notnull(_type) else "AD_SERVING_STANDARD_AD"
         start_time = start_time if pd.notnull(start_time) else pd.datetime.strptime(self.placement.dirsite.campaign.startdate, '%Y-%m-%d')
         self.start_time = start_time.strftime('%Y-%m-%d')
@@ -101,7 +102,7 @@ class DefaultAd(BaseAd):
                 'creativeId': creative_id,
                 'clickThroughUrl': {
                     'defaultLandingPage': 'false',
-                    "customClickThroughUrl": row.custom_url
+                    "customClickThroughUrl": self.custom_url
                 }
             })
 
@@ -531,7 +532,13 @@ class Campaign(object):
             body=self.make_payload(),
         )
         # Execute request and print response.
-        campaign_info = request.execute()
+        try:
+            campaign_info = request.execute()
+        except Exception as err:
+            print err
+            return
+        
+
         campaign_id = int(campaign_info.get("id"))
         self._id = campaign_id
         print '{0} created!'.format(self)

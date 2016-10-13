@@ -1,0 +1,57 @@
+<!doctype html>
+<title>Loading...</title>
+{% if name %}
+  <h1>Hello {{ name }}!</h1>
+{% else %}
+	<img class = "img-responsive" src="/static/title2.png" alt="title2.php" style="width:"pixels"; height:65px;">
+  <center><h1>Mighty Campaign Creation Tool</h1></center>
+  <center><h2 class="text-center"></h2>
+	<span style="font-weight: 400;">File is loading....</span></center>
+	&nbsp;
+	&nbsp;
+	&nbsp;
+	&nbsp;
+
+	#<div class="loader"></div>
+
+<center>
+<style>
+.loader {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: 10px;
+  height: 10px;
+  margin: -7px 0 0 -75px;
+  border: 16px solid #f3f3f3;
+  border-radius: 50%;
+  border-top: 16px solid #3498db;
+  width: 12px;
+  height: 12px;
+  -webkit-animation: spin 2s linear infinite;
+  animation: spin 2s linear infinite;
+}
+
+@-webkit-keyframes spin {
+  0% { -webkit-transform: rotate(0deg); }
+  100% { -webkit-transform: rotate(360deg); }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+</style></center>
+
+
+
+
+<!-- <body onload="myFunction()" style="margin:0;">
+
+<div id="loader"></div>
+
+<div style="display:none;" id="myDiv" class="animate-bottom"> -->
+
+	
+{% endif %}

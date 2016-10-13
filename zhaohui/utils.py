@@ -3,6 +3,7 @@ import csv
 import os
 import httplib2
 
+from oauth2client.contrib import gce
 from googleapiclient import discovery
 from oauth2client import client
 from oauth2client import file as oauthFile
@@ -10,41 +11,34 @@ from oauth2client import tools
 
 from constants import API_SCOPES, API_NAME, API_VERSION
 from constants import ARGS_FILE, CLIENT_SECRET_FILE, CREDENTIAL_STORE_FILE
+from oauth2client.client import flow_from_clientsecrets
+from oauth2client.client import OAuth2WebServerFlow
+from oauth2client.file import Storage
+import webbrowser
 
-
-def get_arguments(argv, desc, parents=None):
-    parent_parsers = [tools.argparser]
-    if parents:
-        parent_parsers.extend(parents)
-    parser = argparse.ArgumentParser(
-      description=desc,
-      formatter_class=argparse.RawDescriptionHelpFormatter,
-      parents=parent_parsers)
-    return parser.parse_args(argv)
 
 
 def get_service_and_profile_id():
-    argparser = argparse.ArgumentParser(add_help=False)
-    argparser.add_argument('profile_id', type=int,
-                       help='The ID of the profile to access the DCM Trafficking API') 
-
-    with open(ARGS_FILE, 'rU') as argsf: ##Change the way it handles profile ID
-        reader = csv.reader(argsf)
-        for argv in reader:
-            flags = get_arguments(argv, __doc__, parents=[argparser])
-            print "this is flags"
-            print flags
-        profileId = argv[0]
+    # profileId = form.profile_id.data
+    # print profileId
+    
 
     flow = client.flow_from_clientsecrets(
         CLIENT_SECRET_FILE,
         scope=API_SCOPES,
-        message=tools.message_if_missing(CLIENT_SECRET_FILE))
+        redirect_uri = "http://localhost:5000"
+        )
     storage = oauthFile.Storage(CREDENTIAL_STORE_FILE)
     credentials = storage.get()
      
     if credentials is None or credentials.invalid:
-        credentials = tools.run_flow(flow, storage, flags)
+        auth_uri = flow.step1_get_authorize_url(redirect_uri="http://localhost")
+        webbrowser.open(auth_uri)
+        code = raw_input('Enter verification code: ').strip()
+        credentials = flow.step2_exchange(code)
+        storage = Storage(CREDENTIAL_STORE_FILE)
+        storage.put(credentials)
+
     http = credentials.authorize(http=httplib2.Http())
 
-    return [discovery.build(API_NAME, API_VERSION, http=http),profileId]
+    return discovery.build(API_NAME, API_VERSION, http=http)
