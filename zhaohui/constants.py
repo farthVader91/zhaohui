@@ -26,7 +26,10 @@ PROFILE_FILE = os.path.join(
     'profileid.csv'
 )
 
-profile_info = pd.read_csv(PROFILE_FILE).values.tolist()
+try:
+    profile_info = pd.read_csv(PROFILE_FILE).values.tolist()
+except:
+    profile_info = []
 
 
 CLIENT_SECRET_FILE = os.path.join(

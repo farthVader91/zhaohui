@@ -1,15 +1,46 @@
 from flask import Flask, request
 from flask import render_template, redirect
 
-from forms import UploadCampaignForm
+from flask_login import LoginManager
 
+from forms import UploadCampaignForm
 from utils import create_campaign, store_csv, make_campaign_entry
 
 app = Flask(__name__)
 app.secret_key = 'some-arbitary-secret-key'
 
+login_manager = LoginManager()
+login_manager.init_app(app)
+
+from functools import wraps
+from flask import request, Response
+
+
+def check_auth(username, password):
+    """This function is called to check if a username /
+    password combination is valid.
+    """
+    return username == 'admin' and password == 'secret'
+
+def authenticate():
+    """Sends a 401 response that enables basic auth"""
+    return Response(
+    'Could not verify your access level for that URL.\n'
+    'You have to login with proper credentials', 401,
+    {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        return f(*args, **kwargs)
+    return decorated
+
 
 @app.route('/', methods=['GET', 'POST']) 
+@requires_auth
 def upload_form():
     form = UploadCampaignForm()
     if form.validate_on_submit():
