@@ -48,7 +48,6 @@ def upload_form():
         status_flag = True
         try:
             status_flag, failed_ads = create_campaign(form.profile_id.data, form.csv.data) 
-            form.csv.data.seek(0, 0)
         except Exception as err:
             print 'error creating campaign'
             print err
