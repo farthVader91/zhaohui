@@ -18,7 +18,7 @@ def store_csv(file_obj):
 	"""Creates a blob with a unique name and uploads onto Google Cloud Storage.
 	Returns the blob object.
 	"""
-	
+	file_obj.seek(0, 0)
 	client = storage.Client()
 	bucket = client.get_bucket(settings.GCS_BUCKET_NAME)
 	df = pd.read_csv(file_obj)
@@ -58,6 +58,7 @@ def make_campaign_entry(profile_id, email, blob, status, info):
 
 
 def create_campaign(profile_id, file_obj):
+	file_obj.seek(0, 0)
 	service = get_service_and_profile_id()
 	# get hold of the dataframe
 	inputs = pd.read_csv(
