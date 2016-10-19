@@ -1,0 +1,14 @@
+entrypoint: python app.py
+runtime: python
+vm: true
+
+# [START handlers]
+handlers:
+- url: /.*
+  script: main.app
+# [END handlers]
+
+# [START env_variables]
+env_variables:
+    GCLOUD_PROJECT: your-project-id
+# [END env_variables]
