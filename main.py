@@ -1,5 +1,5 @@
 from flask import Flask, request
-from flask import render_template, redirect
+from flask import render_template, redirect, url_for
 
 from flask_login import LoginManager
 
@@ -40,14 +40,13 @@ def requires_auth(f):
 
 
 @app.route('/', methods=['GET', 'POST']) 
-@requires_auth
 def upload_form():
     form = UploadCampaignForm()
     if form.validate_on_submit():
         print 'creating campaign for given csv...'
         status_flag = True
         try:
-            status_flag, failed_ads = create_campaign(form.profile_id.data, form.csv.data) 
+            status_flag, failed_campaings, failed_ads = create_campaign(form.profile_id.data, form.csv.data) 
         except Exception as err:
             print 'error creating campaign'
             print err
@@ -69,13 +68,19 @@ def upload_form():
           
         )
         
-        return redirect('/success')
+        return redirect(url_for('success', failed_campaigns=json.dumps(failed_campaigns)))
     return render_template('upload_campaign.html', form=form)
 
 
 @app.route('/success')
 def success():
-    return render_template('2view.html')
+    failed_campaigns = request.args['failed_campaigns']
+    if failed_campaigns:
+        try:
+            failed_campaigns = json.loads(failed_campaigns)
+        except:
+            failed_campaigns = {}
+    return render_template('2view.html', failed_campaigns=failed_campaigns)
 
 
 @app.route('/fail')

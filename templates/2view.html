@@ -1,21 +1,21 @@
 <!doctype html>
 <title>Success</title>
-{% if name %}
-  <h1>Hello {{ name }}!</h1>
-{% else %}
-	<img class = "img-responsive" src="/static/title2.png" alt="title2.php" style="width:"pixels"; height:65px;">
-  <center><h1>Mighty Campaign Creation Tool</h1></center>
-  <center><h2 class="text-center"></h2>
-	<span style="font-weight: 800;">Success! You have successfully upload the file and your campaign has been created!
-	</span></center>
-	&nbsp;
-	&nbsp;
-	<center><span style="font-weight: 1200;">Please upload your creatives now if you haven't done so.</span> </center>
-	&nbsp;
-	<center><span style="font-weight: 1200;">Your Trafficking will be done within 24 hrs. You will expect an email for trafficking completion.</span></center>
-	&nbsp;
-	&nbsp;
-	<center>
-    	<button onclick="location.href='http://localhost:5000/'">Go Back To Home Page</button>
-	</center>
+<img class = "img-responsive" src="/static/title2.png" alt="title2.php" style="width:"pixels"; height:65px;">
+<center><h1>Mighty Campaign Creation Tool</h1></center>
+<center><h2 class="text-center"></h2>
+{%if failed_campaigns %}
+<span>The following campaigns failed to be created due to these reasons:</span>
+	{{ failed_campaigns }}
 {% endif %}
+<span style="font-weight: 800;">Success! You have successfully upload the file and your campaign has been created!
+</span></center>
+&nbsp;
+&nbsp;
+<center><span style="font-weight: 1200;">Please upload your creatives now if you haven't done so.</span> </center>
+&nbsp;
+<center><span style="font-weight: 1200;">Your Trafficking will be done within 24 hrs. You will expect an email for trafficking completion.</span></center>
+&nbsp;
+&nbsp;
+<center>
+	<button onclick="location.href='http://localhost:5000/'">Go Back To Home Page</button>
+</center>
